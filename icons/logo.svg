@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="28%" r="92%">
+      <stop offset="0%" stop-color="#1C4A3F"/>
+      <stop offset="70%" stop-color="#12332C"/>
+    </radialGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F6B24A"/>
+      <stop offset="100%" stop-color="#E58922"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background (full bleed for maskable icons) -->
+  <rect width="512" height="512" fill="url(#bg)"/>
+
+  <!-- soft trees silhouette -->
+  <g fill="#0E2822" opacity="0.5">
+    <polygon points="74,472 34,472 54,412"/>
+    <polygon points="478,472 438,472 458,412"/>
+  </g>
+
+  <!-- star -->
+  <g transform="translate(402,120)">
+    <path d="M0,-24 L6.5,-7.5 L24,-7.5 L10,3.5 L15.5,21 L0,10 L-15.5,21 L-10,3.5 L-24,-7.5 L-6.5,-7.5 Z" fill="#F2A93B"/>
+  </g>
+
+  <g stroke="#12332C" stroke-width="11" stroke-linejoin="round">
+    <!-- ears (big, pointed) -->
+    <polygon points="112,236 150,92 258,196" fill="url(#fur)"/>
+    <polygon points="400,236 362,92 254,196" fill="url(#fur)"/>
+
+    <!-- head: wide cheeks tapering to a pointed chin -->
+    <path d="M256,168
+             C352,150 402,214 400,282
+             C398,332 350,366 300,398
+             L256,440
+             L212,398
+             C162,366 114,332 112,282
+             C110,214 160,150 256,168 Z" fill="url(#fur)"/>
+  </g>
+
+  <!-- inner ears -->
+  <polygon points="150,206 168,132 216,196" fill="#D6452C"/>
+  <polygon points="362,206 344,132 296,196" fill="#D6452C"/>
+
+  <!-- white muzzle: slim diamond down to the chin -->
+  <path d="M256,250
+           C296,250 320,272 326,300
+           C314,346 292,372 256,420
+           C220,372 198,346 186,300
+           C192,272 216,250 256,250 Z"
+        fill="#F6F0E2" stroke="#12332C" stroke-width="9" stroke-linejoin="round"/>
+
+  <!-- eyes: angled almonds -->
+  <g fill="#12332C">
+    <path d="M186,262 Q206,246 226,262 Q206,282 186,262 Z"/>
+    <path d="M286,262 Q306,246 326,262 Q306,282 286,262 Z"/>
+  </g>
+  <g fill="#F6F0E2">
+    <circle cx="200" cy="260" r="5"/>
+    <circle cx="300" cy="260" r="5"/>
+  </g>
+
+  <!-- nose -->
+  <path d="M256,360 L232,330 Q256,320 280,330 Z" fill="#12332C"/>
+  <line x1="256" y1="360" x2="256" y2="384" stroke="#12332C" stroke-width="8" stroke-linecap="round"/>
+</svg>
