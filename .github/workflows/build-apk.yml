@@ -1,0 +1,62 @@
+name: Build Regneapp APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'manifest.webmanifest'
+      - 'sw.js'
+      - 'icons/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Prepare local web app
+        run: |
+          mkdir -p www/icons
+          cp index.html manifest.webmanifest sw.js www/
+          cp icons/logo.svg www/icons/
+          curl -fLsS https://raw.githubusercontent.com/gromito/regneapp/claude/github-repo-regneapp-a8tcok/icons/icon-192.png -o www/icons/icon-192.png
+          curl -fLsS https://raw.githubusercontent.com/gromito/regneapp/claude/github-repo-regneapp-a8tcok/icons/icon-512.png -o www/icons/icon-512.png
+          curl -fLsS https://raw.githubusercontent.com/gromito/regneapp/claude/github-repo-regneapp-a8tcok/icons/apple-touch-icon.png -o www/icons/apple-touch-icon.png
+      - name: Install Capacitor and generate Android project
+        run: |
+          npm init -y
+          npm install --save-exact @capacitor/core@7 @capacitor/android@7
+          npm install --save-dev --save-exact @capacitor/cli@7
+          cat > capacitor.config.json <<'EOF'
+          {
+            "appId": "dk.regneapp.laering",
+            "appName": "Regneapp",
+            "webDir": "www"
+          }
+          EOF
+          npx cap add android
+          npx cap sync android
+      - name: Build Android APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Regneapp-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
