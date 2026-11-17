@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#12332C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tallskogen">
+<meta name="application-name" content="Tallskogen">
+<title>Tallskogen</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/logo.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{
+  --night:#12332C; --forest:#1C4A3F; --moss:#4E8C5A; --birch:#F6F0E2;
+  --sun:#F2A93B; --rowan:#D6452C; --berry:#3E5FA8; --bark:#7A5A3C;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:radial-gradient(120% 90% at 50% 0%, var(--forest) 0%, var(--night) 70%);
+  background-attachment:fixed;
+  color:var(--birch);
+  font-family:'Nunito',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,system-ui,sans-serif;
+  -webkit-user-select:none;user-select:none;
+  overflow-x:hidden;
+}
+.disp{font-family:'Baloo 2','Trebuchet MS',system-ui,sans-serif;font-weight:800;letter-spacing:.01em}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;touch-action:manipulation}
+#app{max-width:900px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 14px calc(20px + env(safe-area-inset-bottom))}
+
+/* ---- animasjoner ---- */
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes floatup{0%{transform:translate(-50%,0) scale(1);opacity:1}100%{transform:translate(-50%,-140px) scale(1.8);opacity:0}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.pop{animation:pop .28s ease-out both}
+.shake{animation:shake .45s ease-in-out}
+.bob{animation:bob 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.pop,.shake,.bob,.star{animation:none!important}}
+
+/* ---- hjem ---- */
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-size:clamp(26px,7vw,42px);color:var(--sun);line-height:1}
+.brand p{font-size:12px;opacity:.7}
+.iconbtn{width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;background:rgba(246,240,226,.14);border:2px solid rgba(246,240,226,.3)}
+.iconbtn:active{transform:scale(.9)}
+
+.sti{border-radius:24px;padding:14px;background:rgba(246,240,226,.08);border:2px solid rgba(246,240,226,.16)}
+.sti-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:clamp(15px,3.6vw,19px)}
+.track{position:relative;height:56px}
+.rail{position:absolute;left:0;right:0;top:28px;height:8px;border-radius:99px;background:rgba(246,240,226,.18)}
+.fill{position:absolute;left:0;top:28px;height:8px;border-radius:99px;background:var(--moss);transition:width .6s}
+.dots{position:absolute;left:0;right:0;top:16px;display:flex;justify-content:space-between}
+.dots i{width:10px;height:10px;border-radius:99px;background:rgba(246,240,226,.25)}
+.dots i.on{background:var(--sun)}
+.fox{position:absolute;top:0;font-size:30px;transition:left .6s}
+.camp{position:absolute;right:0;top:4px;font-size:26px}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;font-size:24px}
+
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-top:12px}
+.card{border-radius:26px;padding:14px;text-align:left;box-shadow:0 6px 0 rgba(0,0,0,.28);color:var(--birch)}
+.card:active{transform:scale(.95)}
+.card .row{display:flex;justify-content:space-between;align-items:flex-start}
+.card .emo{font-size:clamp(32px,9vw,44px);line-height:1}
+.card .lvl{font-size:11px;font-weight:800;padding:4px 8px;border-radius:99px;background:rgba(0,0,0,.25)}
+.card h3{font-size:clamp(18px,4.6vw,23px);margin-top:8px;line-height:1.1}
+.card small{font-size:12px;opacity:.85}
+.bar{height:6px;border-radius:99px;background:rgba(0,0,0,.25);margin-top:8px}
+.bar span{display:block;height:6px;border-radius:99px;background:var(--birch)}
+
+/* ---- spill ---- */
+.play{min-height:100dvh;display:flex;flex-direction:column}
+.steps{display:flex;gap:4px;flex:1}
+.steps i{flex:1;height:10px;border-radius:99px;background:rgba(246,240,226,.16)}
+.steps i.done{background:var(--sun)}
+.steps i.now{background:rgba(242,169,59,.45)}
+.speak{margin:0 auto 12px;padding:10px 16px;border-radius:99px;display:flex;align-items:center;gap:8px;
+  background:rgba(246,240,226,.12);border:2px solid rgba(246,240,226,.25);font-size:clamp(15px,3.8vw,20px);
+  font-family:'Baloo 2',system-ui,sans-serif;font-weight:700;max-width:100%;text-align:left}
+.speak:active{transform:scale(.96)}
+.stage{flex:0 0 auto;margin-top:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:10px 0}
+.objs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:100%}
+.obj{width:clamp(44px,12vw,72px);height:clamp(44px,12vw,72px);border-radius:18px;display:flex;align-items:center;
+  justify-content:center;font-size:clamp(24px,7vw,38px);background:rgba(255,255,255,.12);
+  border:3px solid rgba(246,240,226,.35);transition:background .15s,transform .12s}
+.obj.on{background:rgba(242,169,59,.9);border-color:var(--sun)}
+.obj:active{transform:scale(.9)}
+.group{border-radius:24px;padding:8px;border:2px dashed rgba(246,240,226,.3)}
+.gA{background:rgba(78,140,90,.25)} .gB{background:rgba(62,95,168,.3)}
+.gGone{background:rgba(214,69,44,.25);opacity:.45}
+.eq{font-size:clamp(26px,7vw,42px)}
+.opsign{font-size:clamp(32px,9vw,52px);color:var(--sun)}
+.counter{padding:4px 18px;border-radius:99px;background:var(--sun);color:var(--night);font-size:clamp(20px,5vw,28px)}
+.seq{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.cellnum{width:clamp(50px,14vw,80px);height:clamp(56px,15vw,86px);border-radius:18px;display:flex;align-items:center;
+  justify-content:center;font-size:clamp(26px,7vw,38px);background:rgba(246,240,226,.14);border:3px solid rgba(246,240,226,.28)}
+.cellnum.hole{background:rgba(242,169,59,.22);border:3px dashed var(--sun);color:var(--sun)}
+.frame{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.fcell{width:clamp(38px,11vw,60px);height:clamp(38px,11vw,60px);border-radius:14px;border:3px solid var(--birch);
+  background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:clamp(16px,4.5vw,24px)}
+.fcell.full{background:var(--rowan)}
+.cmp{display:flex;gap:12px;width:100%}
+.cmp button{flex:1;border-radius:26px;padding:12px;min-height:170px;display:flex;align-items:center;justify-content:center;
+  background:rgba(246,240,226,.1);border:3px solid rgba(246,240,226,.28)}
+.cmp button:active{transform:scale(.96)}
+.cmp .set{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;font-size:clamp(20px,5.5vw,32px)}
+.cmp .right{background:rgba(78,140,90,.5);border-color:var(--birch)}
+.cmp .bad{background:rgba(214,69,44,.45);border-color:var(--birch)}
+.coins{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:420px}
+.coin:active{transform:scale(.9)}
+.coin.used{opacity:.5}
+
+.answers{display:grid;gap:12px;margin-top:18px;margin-bottom:auto}
+.ans{border-radius:26px;min-height:clamp(70px,17vw,100px);display:flex;align-items:center;justify-content:center;
+  background:rgba(246,240,226,.14);border:3px solid rgba(246,240,226,.3);box-shadow:0 5px 0 rgba(0,0,0,.25);
+  font-size:clamp(30px,9vw,48px);font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;padding:6px}
+.ans.text{font-size:clamp(16px,4.4vw,23px);text-align:center;line-height:1.15}
+.ans:active{transform:scale(.95)}
+.ans.right{background:var(--moss);border-color:var(--birch)}
+.ans.bad{background:var(--rowan);border-color:var(--birch)}
+.star{position:fixed;left:50%;top:45%;font-size:64px;pointer-events:none;animation:floatup 1s ease-out forwards;z-index:60}
+
+/* ---- belønning ---- */
+.reward{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+.reward h2{font-size:clamp(30px,8vw,46px);color:var(--sun)}
+.starrow{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;font-size:34px;max-width:300px;margin:14px 0}
+.starrow span{opacity:.22}
+.starrow span.got{opacity:1}
+.btnrow{display:flex;gap:12px;width:100%;max-width:380px;margin-top:24px}
+.big{flex:1;border-radius:26px;padding:16px 8px;font-family:'Baloo 2',system-ui,sans-serif;font-weight:800;font-size:19px;
+  background:rgba(246,240,226,.14);border:3px solid rgba(246,240,226,.3)}
+.big.go{background:var(--moss);border-color:var(--birch);box-shadow:0 5px 0 rgba(0,0,0,.28)}
+.big:active{transform:scale(.95)}
+
+/* ---- voksen ---- */
+.panel{border-radius:26px;padding:16px;background:rgba(246,240,226,.08);margin-bottom:16px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat{border-radius:18px;padding:12px;text-align:center;background:rgba(246,240,226,.1)}
+.stat b{display:block;font-size:24px;color:var(--sun);font-family:'Baloo 2',system-ui,sans-serif}
+.stat small{font-size:11px;opacity:.7}
+.skill{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:14px}
+.skill .pct{font-size:11px;opacity:.6;margin-left:auto;white-space:nowrap}
+.pips{display:flex;gap:2px}
+.pips i{width:9px;height:20px;border-radius:3px;background:rgba(246,240,226,.15)}
+.toggles{display:flex;gap:12px}
+.toggles button{flex:1;border-radius:18px;padding:14px;background:rgba(246,240,226,.12)}
+.danger{width:100%;margin-top:12px;border-radius:18px;padding:14px;font-size:14px;
+  background:rgba(214,69,44,.25);border:1px solid var(--rowan)}
+.modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(0,0,0,.7)}
+.sheet{width:100%;max-width:360px;border-radius:26px;padding:22px;background:var(--forest);border:2px solid var(--moss)}
+.sheet input{width:100%;border-radius:16px;padding:14px;font-size:24px;background:rgba(0,0,0,.3);color:var(--birch);
+  border:2px solid rgba(246,240,226,.25);font-family:'Baloo 2',system-ui,sans-serif;text-align:center}
+.sheet .row2{display:flex;gap:10px;margin-top:14px}
+.sheet .row2 button{flex:1;border-radius:16px;padding:13px;background:rgba(246,240,226,.14)}
+.sheet .row2 button.ok{background:var(--moss)}
+.sheet .row2 button.no{background:var(--rowan)}
+.hint{font-size:14px;line-height:1.6;opacity:.86}
+.vsel{width:100%;border-radius:16px;padding:13px;font-size:15px;background:rgba(0,0,0,.3);color:var(--birch);
+  border:2px solid rgba(246,240,226,.25);appearance:none;-webkit-appearance:none}
+.vsel option{background:var(--forest);color:var(--birch)}
+.speedrow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.speedrow input[type=range]{flex:1;accent-color:var(--sun)}
+
+/* ---- nettbrett / større skjermer ---- */
+@media (min-width:720px){
+  #app{max-width:1040px;padding-left:22px;padding-right:22px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px;margin-top:16px}
+  .card{padding:18px;border-radius:30px}
+  .sti{padding:18px}
+  .speak{font-size:clamp(18px,2.6vw,25px);padding:12px 22px;margin-bottom:16px}
+  .obj{width:clamp(56px,8vw,88px);height:clamp(56px,8vw,88px);font-size:clamp(30px,5.2vw,46px);border-radius:22px}
+  .ans{min-height:clamp(86px,11vw,124px);font-size:clamp(34px,6vw,54px)}
+  .ans.text{font-size:clamp(19px,3vw,27px)}
+  .cellnum{width:clamp(64px,9vw,96px);height:clamp(70px,10vw,104px);font-size:clamp(30px,5vw,44px)}
+  .stat b{font-size:28px}
+}
+/* del spillskjermen i to i landskap på nettbrett */
+@media (min-width:860px) and (orientation:landscape){
+  .play{
+    display:grid;
+    grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+    grid-template-areas:"top top" "speak speak" "stage answers";
+    align-content:start;
+    column-gap:30px;row-gap:12px;
+  }
+  .play>.top{grid-area:top}
+  .play>.speak{grid-area:speak;justify-self:center}
+  .play>.stage{grid-area:stage;min-height:auto;align-self:center;margin-top:0}
+  .play>.answers{grid-area:answers;align-self:center;margin-top:0;margin-bottom:0}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+
+/* ===== hjelpere ===== */
+var rnd=function(a,b){return a+Math.floor(Math.random()*(b-a+1));};
+var pick=function(a){return a[rnd(0,a.length-1)];};
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=rnd(0,i);var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function choicesAround(ans,span,min,max,n){
+  n=n||4;var set=[ans],g=0;
+  while(set.length<n&&g++<300){var v=ans+rnd(-span,span);if(v>=min&&v<=max&&set.indexOf(v)<0)set.push(v);}
+  var f=min;while(set.length<n){if(set.indexOf(f)<0)set.push(f);f++;}
+  return shuffle(set);
+}
+var NATURE=["🌰","🍄","🫐","🍁","🌲","🍎","🐞","🐿️","🦔","🐤","🌼","⭐"];
+var BADGES=["🦊","🦉","🦌","🐻","🦫","🦅","🐺","🦇","🐸","🦎"];
+var TASKS=8, PATH=12;
+
+/* ===== lagring ===== */
+var KEY="tallskogen.v1";
+var FRESH={stars:0,step:0,badges:[],sessions:0,levels:{},stats:{},sound:true,voice:true,voiceName:"",rate:0.9,pitch:1.1};
+var S=null, mem=null;
+function load(){
+  try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);return Object.assign({},FRESH,o);}}catch(e){}
+  return JSON.parse(JSON.stringify(FRESH));
+}
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;}
+}
+
+/* ===== lyd ===== */
+var actx=null;
+function tone(kind){
+  if(!S.sound)return;
+  try{
+    if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended")actx.resume();
+  }catch(e){return;}
+  var n = kind==="right"?[523,659,784] : kind==="wrong"?[330,262] : kind==="tap"?[660] :
+          kind==="win"?[523,659,784,1047,1319] : [440];
+  n.forEach(function(f,i){
+    var o=actx.createOscillator(),g=actx.createGain();
+    o.type = kind==="wrong"?"sine":"triangle"; o.frequency.value=f;
+    var t=actx.currentTime+i*(kind==="win"?0.11:0.09);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.16,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.32);
+    o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.34);
+  });
+}
+var VOICES=[];
+function rank(v){
+  if(/^(nb|nn|no)/i.test(v.lang))return 0;
+  if(/^(sv|da)/i.test(v.lang))return 1;
+  if(/^de|^nl/i.test(v.lang))return 2;
+  return 3;
+}
+function loadVoices(){
+  try{
+    VOICES=window.speechSynthesis.getVoices().slice().sort(function(a,b){
+      var d=rank(a)-rank(b);
+      return d!==0?d:a.name.localeCompare(b.name);
+    });
+  }catch(e){VOICES=[];}
+  if(typeof G!=="undefined"&&G&&G.screen==="voksen"&&S)render();
+}
+try{loadVoices();window.speechSynthesis.onvoiceschanged=loadVoices;}catch(e){}
+function currentVoice(){
+  if(!VOICES.length)return null;
+  if(S.voiceName){
+    var hit=VOICES.filter(function(v){return v.name===S.voiceName;})[0];
+    if(hit)return hit;
+  }
+  return VOICES[0]&&rank(VOICES[0])<=1?VOICES[0]:null;
+}
+function say(text){
+  if(!S.voice||!text)return;
+  try{
+    window.speechSynthesis.cancel();
+    var u=new SpeechSynthesisUtterance(text);
+    var v=currentVoice();
+    u.lang = v?v.lang:"nb-NO";
+    u.rate = S.rate||0.9;
+    u.pitch = (S.pitch===undefined?1.1:S.pitch);
+    if(v)u.voice=v;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ===== oppgaver ===== */
+function genCount(l){
+  var max=[5,10,12,16,20][l-1], n=rnd(1,max);
+  return {kind:"count",emoji:pick(NATURE),n:n,speak:"Hvor mange ser du? Trykk på hver ting for å telle.",
+    choices:choicesAround(n,3,1,Math.max(max,6)),answer:n};
+}
+function genMissing(l){
+  var max=[10,12,16,20,20][l-1], st=(l>=4&&Math.random()<.4)?2:1, len=5;
+  var start=rnd(0,Math.max(0,max-st*(len-1))), seq=[];
+  for(var i=0;i<len;i++)seq.push(start+i*st);
+  var hole=rnd(1,len-1);
+  return {kind:"missing",seq:seq,hole:hole,speak:"Hvilket tall mangler i tallrekken?",
+    choices:choicesAround(seq[hole],3,0,max+4),answer:seq[hole]};
+}
+function genAdd(l){
+  var max=[5,10,10,15,20][l-1];
+  var a=rnd(1,Math.max(1,Math.floor(max/2))), b=rnd(1,Math.max(1,max-a));
+  return {kind:"op",a:a,b:b,op:"+",emoji:pick(NATURE),speak:"Hva er "+a+" pluss "+b+"?",
+    choices:choicesAround(a+b,3,0,max+3),answer:a+b};
+}
+function genSub(l){
+  var max=[5,10,10,15,20][l-1], a=rnd(2,max), b=rnd(1,a);
+  return {kind:"op",a:a,b:b,op:"−",emoji:pick(NATURE),speak:"Hva er "+a+" minus "+b+"?",
+    choices:choicesAround(a-b,3,0,max),answer:a-b};
+}
+function genTen(l){
+  var target = l<=2?10:pick([10,10,20]), a=rnd(0,target-1);
+  return {kind:"frame",a:a,target:target,speak:"Hvor mange mangler for å komme til "+target+"?",
+    choices:choicesAround(target-a,3,0,target),answer:target-a};
+}
+function genCompare(l){
+  var max=[6,9,12,16,20][l-1], a=rnd(1,max), b=rnd(1,max);
+  while(a===b)b=rnd(1,max);
+  var most=Math.random()<.5;
+  return {kind:"compare",a:a,b:b,emoji:pick(NATURE),
+    speak: most?"Trykk på gruppen med flest.":"Trykk på gruppen med færrest.",
+    answer: most?(a>b?"v":"h"):(a<b?"v":"h")};
+}
+function genDouble(l){
+  var max=[5,6,8,10,10][l-1];
+  if(l>=2&&Math.random()<.5){
+    var h=rnd(1,max), d=h*2;
+    return {kind:"op",a:d,b:2,op:"half",emoji:pick(NATURE),speak:"Hva er halvparten av "+d+"?",
+      choices:choicesAround(h,3,0,max+3),answer:h};
+  }
+  var a=rnd(1,max);
+  return {kind:"op",a:a,b:a,op:"+",emoji:pick(NATURE),speak:"Hva er det dobbelte av "+a+"?",
+    choices:choicesAround(a*2,3,0,max*2+3),answer:a*2};
+}
+var SHAPES=["sirkel","trekant","firkant","rektangel"];
+function genShape(l){
+  if(l>=3&&Math.random()<.5){
+    var two=shuffle(SHAPES).slice(0,2);
+    var base = (l>=4&&Math.random()<.5)?[two[0],two[0],two[1]]:[two[0],two[1]];
+    var row=[];for(var i=0;i<7;i++)row.push(base[i%base.length]);
+    var ans=row[6];
+    var others=shuffle(SHAPES.filter(function(s){return s!==ans;})).slice(0,2);
+    return {kind:"pattern",row:row.slice(0,6),speak:"Hvilken form kommer etter?",
+      choices:shuffle([ans].concat(others)),answer:ans,shapeChoices:true};
+  }
+  var t=pick(SHAPES), o=shuffle(SHAPES.filter(function(s){return s!==t;})).slice(0,2);
+  return {kind:"shape",shape:t,speak:"Hvilken form er dette?",
+    choices:shuffle([t].concat(o)),answer:t,shapeChoices:true};
+}
+function genClock(l){
+  var half = l>=3 && Math.random()<.5, h=rnd(1,12);
+  var lab = half ? ("halv "+(h===12?1:h+1)) : ("klokka "+h);
+  var opts=[lab],g=0;
+  while(opts.length<3&&g++<80){
+    var hh=rnd(1,12), ih = l>=3?Math.random()<.5:false;
+    var c = ih?("halv "+(hh===12?1:hh+1)):("klokka "+hh);
+    if(opts.indexOf(c)<0)opts.push(c);
+  }
+  return {kind:"clock",h:h,half:half,speak:"Hva er klokka?",choices:shuffle(opts),answer:lab,textChoices:true};
+}
+function genMoney(l){
+  var pool = l<=1?[1] : l===2?[1,5] : l===3?[1,5,10] : [1,5,10,20];
+  var n = l<=2?rnd(2,4):rnd(2,5), coins=[], sum=0;
+  for(var i=0;i<n;i++){var c=pick(pool);coins.push(c);sum+=c;}
+  return {kind:"money",coins:coins,speak:"Hvor mange kroner er dette til sammen?",
+    choices:choicesAround(sum,Math.max(3,Math.round(sum/3)),1,sum+12),answer:sum};
+}
+
+var ACTS=[
+  {id:"tell",title:"Tell",sub:"1 til 20",emoji:"🌰",color:"#4E8C5A",gen:genCount},
+  {id:"rekke",title:"Tallrekke",sub:"Hva mangler?",emoji:"🔢",color:"#3E5FA8",gen:genMissing},
+  {id:"pluss",title:"Pluss",sub:"Legg sammen",emoji:"➕",color:"#D6452C",gen:genAdd},
+  {id:"minus",title:"Minus",sub:"Ta bort",emoji:"➖",color:"#B0632A",gen:genSub},
+  {id:"tiervenn",title:"Tiervenner",sub:"Fyll opp til 10",emoji:"🖐️",color:"#2E7D74",gen:genTen},
+  {id:"flest",title:"Flest og færrest",sub:"Sammenlign",emoji:"⚖️",color:"#6A4C93",gen:genCompare},
+  {id:"dobbel",title:"Dobbelt",sub:"Og halvparten",emoji:"🪞",color:"#1F6FA8",gen:genDouble},
+  {id:"former",title:"Former",sub:"Og mønster",emoji:"🔺",color:"#C2185B",gen:genShape},
+  {id:"klokka",title:"Klokka",sub:"Hel og halv",emoji:"🕒",color:"#3D5A80",gen:genClock},
+  {id:"penger",title:"Penger",sub:"Tell kroner",emoji:"🪙",color:"#F2A93B",gen:genMoney}
+];
+function actById(id){return ACTS.filter(function(a){return a.id===id;})[0];}
+
+/* ===== SVG ===== */
+function svgShape(id,size){
+  var s=size||70, f="#F6F0E2", k="#12332C";
+  var head='<svg width="'+s+'" height="'+s+'" viewBox="0 0 100 100">';
+  if(id==="sirkel")return head+'<circle cx="50" cy="50" r="42" fill="'+f+'" stroke="'+k+'" stroke-width="6"/></svg>';
+  if(id==="trekant")return head+'<polygon points="50,8 94,90 6,90" fill="'+f+'" stroke="'+k+'" stroke-width="6" stroke-linejoin="round"/></svg>';
+  if(id==="firkant")return head+'<rect x="10" y="10" width="80" height="80" rx="8" fill="'+f+'" stroke="'+k+'" stroke-width="6"/></svg>';
+  return head+'<rect x="6" y="26" width="88" height="48" rx="8" fill="'+f+'" stroke="'+k+'" stroke-width="6"/></svg>';
+}
+function svgClock(h,half){
+  var size="min(58vw,230px)";
+  var ha=((h%12)+(half?.5:0))*30, ma=half?180:0;
+  function hand(a,len,w,col){
+    var r=(a-90)*Math.PI/180;
+    return '<line x1="100" y1="100" x2="'+(100+Math.cos(r)*len)+'" y2="'+(100+Math.sin(r)*len)+'" stroke="'+col+'" stroke-width="'+w+'" stroke-linecap="round"/>';
+  }
+  var nums="";
+  for(var i=0;i<12;i++){
+    var a=(i*30-90)*Math.PI/180;
+    nums+='<text x="'+(100+Math.cos(a)*70)+'" y="'+(100+Math.sin(a)*70+8)+'" text-anchor="middle" font-size="21" font-weight="800" fill="#12332C" font-family="Baloo 2,sans-serif">'+(i===0?12:i)+'</text>';
+  }
+  return '<svg style="width:'+size+';height:'+size+'" viewBox="0 0 200 200">'+
+    '<circle cx="100" cy="100" r="92" fill="#F6F0E2" stroke="#7A5A3C" stroke-width="10"/>'+nums+
+    hand(ma,74,7,"#3E5FA8")+hand(ha,50,10,"#D6452C")+'<circle cx="100" cy="100" r="8" fill="#12332C"/></svg>';
+}
+function svgCoin(v){
+  var col = v===1?"#C9C9C9" : v===5?"#D8D2C0" : v===10?"#E8C46A" : "#E0A23C";
+  return '<svg width="64" height="64" viewBox="0 0 100 100">'+
+    '<circle cx="50" cy="50" r="45" fill="'+col+'" stroke="#8A7A55" stroke-width="5"/>'+
+    '<circle cx="50" cy="50" r="36" fill="none" stroke="#8A7A55" stroke-width="2" opacity=".6"/>'+
+    '<text x="50" y="63" text-anchor="middle" font-size="38" font-weight="800" fill="#4A3D22" font-family="Baloo 2,sans-serif">'+v+'</text></svg>';
+}
+
+/* ===== tilstand for økt ===== */
+var G={screen:"hjem",act:null,task:null,idx:0,correct:0,tapped:{},locked:false,ok:0,bad:0};
+var app=document.getElementById("app");
+function lvl(id){return S.levels[id]||1;}
+
+/* ===== render ===== */
+function render(){
+  if(G.screen==="hjem")renderHome();
+  else if(G.screen==="spill")renderPlay();
+  else if(G.screen==="belonning")renderReward();
+  else if(G.screen==="voksen")renderAdult();
+  window.scrollTo(0,0);
+}
+
+function stiHTML(){
+  var pctW=(S.step/PATH)*100, dots="";
+  for(var i=0;i<=PATH;i++)dots+='<i class="'+(i<=S.step?"on":"")+'"></i>';
+  return '<div class="sti">'+
+    '<div class="sti-head"><span class="disp">Skogsstien</span><span class="disp" style="color:var(--sun)">⭐ '+S.stars+'</span></div>'+
+    '<div class="track"><div class="rail"></div><div class="fill" style="width:'+pctW+'%"></div>'+
+    '<div class="dots">'+dots+'</div>'+
+    '<div class="fox bob" style="left:calc('+pctW+'% - 14px)">🦊</div><div class="camp">🏕️</div></div>'+
+    (S.badges.length?'<div class="badges">'+S.badges.join("")+'</div>':'')+'</div>';
+}
+
+function renderHome(){
+  var cards=ACTS.map(function(a){
+    var L=lvl(a.id);
+    return '<button class="card" data-act="'+a.id+'" style="background:'+a.color+';'+(a.id==="penger"?"color:#12332C":"")+'">'+
+      '<div class="row"><span class="emo">'+a.emoji+'</span><span class="lvl" style="color:#F6F0E2">Nivå '+L+'</span></div>'+
+      '<h3 class="disp">'+a.title+'</h3><small>'+a.sub+'</small>'+
+      '<div class="bar"><span style="width:'+(L/5*100)+'%"></span></div></button>';
+  }).join("");
+  app.innerHTML=
+    '<div class="top"><div class="brand"><span style="font-size:38px" class="bob">🦊</span>'+
+    '<div><h1 class="disp">Tallskogen</h1><p>Regning for første klasse</p></div></div>'+
+    '<div style="display:flex;gap:8px">'+
+    '<button class="iconbtn" data-do="lyd">'+(S.voice?"🔊":"🔇")+'</button>'+
+    '<button class="iconbtn" data-do="gate">👤</button></div></div>'+
+    stiHTML()+
+    '<p class="disp" style="text-align:center;margin:22px 0 4px;font-size:clamp(18px,4.5vw,24px)">Hva vil du øve på?</p>'+
+    '<div class="grid">'+cards+'</div>';
+}
+
+function objsHTML(emoji,n,tappable,cls){
+  var h='<div class="objs">';
+  for(var i=0;i<n;i++)
+    h+='<button class="obj pop '+(cls||"")+'" style="animation-delay:'+(i*.035)+'s" '+(tappable?'data-tap="'+i+'"':'disabled')+'>'+emoji+'</button>';
+  return h+'</div>';
+}
+
+function stageHTML(t){
+  if(t.kind==="count")return objsHTML(t.emoji,t.n,true);
+  if(t.kind==="op"){
+    if(t.op==="half")
+      return objsHTML(t.emoji,t.a,true)+'<div class="disp eq">halvparten av '+t.a+'</div>';
+    var second = t.op==="+"
+      ? '<div class="group gB">'+objsHTML(t.emoji,t.b,true)+'</div>'
+      : '<div class="group gGone">'+objsHTML(t.emoji,t.b,false)+'</div>';
+    return '<div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">'+
+      '<div class="group gA">'+objsHTML(t.emoji,t.a,true)+'</div>'+
+      '<span class="disp opsign">'+t.op+'</span>'+second+'</div>'+
+      '<div class="disp eq">'+t.a+' '+t.op+' '+t.b+' = ?</div>';
+  }
+  if(t.kind==="missing"){
+    var h='<div class="seq">';
+    for(var i=0;i<t.seq.length;i++)
+      h+='<div class="cellnum disp '+(i===t.hole?"hole":"")+'">'+(i===t.hole?"?":t.seq[i])+'</div>';
+    return h+'</div>';
+  }
+  if(t.kind==="frame"){
+    var f='<div class="frame">';
+    for(var j=0;j<t.target;j++)f+='<div class="fcell '+(j<t.a?"full":"")+'">'+(j<t.a?"⬤":"")+'</div>';
+    return f+'</div><div class="disp eq" style="font-size:clamp(22px,5.5vw,32px)">'+t.a+' + ? = '+t.target+'</div>';
+  }
+  if(t.kind==="compare"){
+    function set(n){var s='<div class="set">';for(var i=0;i<n;i++)s+='<span class="pop" style="animation-delay:'+(i*.03)+'s">'+t.emoji+'</span>';return s+'</div>';}
+    return '<div class="cmp"><button data-side="v">'+set(t.a)+'</button><button data-side="h">'+set(t.b)+'</button></div>';
+  }
+  if(t.kind==="shape")return svgShape(t.shape,150);
+  if(t.kind==="pattern"){
+    var p='<div class="seq" style="align-items:center">';
+    t.row.forEach(function(s){p+=svgShape(s,54);});
+    return p+'<div class="cellnum hole disp" style="width:54px;height:54px;font-size:26px">?</div></div>';
+  }
+  if(t.kind==="clock")return svgClock(t.h,t.half);
+  if(t.kind==="money"){
+    var c='<div class="coins">';
+    t.coins.forEach(function(v,i){c+='<button class="coin pop" data-tap="'+i+'" style="animation-delay:'+(i*.05)+'s">'+svgCoin(v)+'</button>';});
+    return c+'</div>';
+  }
+  return "";
+}
+
+function renderPlay(){
+  var t=G.task, a=G.act, steps="";
+  for(var i=0;i<TASKS;i++)steps+='<i class="'+(i<G.idx?"done":i===G.idx?"now":"")+'"></i>';
+  var answers="";
+  if(t.choices){
+    var cols=t.choices.length===3?3:2;
+    answers='<div class="answers" style="grid-template-columns:repeat('+cols+',1fr)">'+
+      t.choices.map(function(c){
+        var inner = t.shapeChoices ? svgShape(c,52) : String(c);
+        return '<button class="ans '+(t.textChoices?"text":"")+'" data-ans="'+c+'">'+inner+'</button>';
+      }).join("")+'</div>';
+  }
+  app.innerHTML='<div class="play">'+
+    '<div class="top" style="margin-bottom:12px">'+
+      '<button class="iconbtn" data-do="hjem">🏠</button>'+
+      '<div class="steps">'+steps+'</div>'+
+      '<span class="lvl" style="background:'+a.color+';padding:6px 10px;border-radius:99px;font-size:12px;font-weight:800">N'+lvl(a.id)+'</span>'+
+    '</div>'+
+    '<button class="speak" data-do="si"><span style="font-size:20px">🔊</span><span>'+t.speak+'</span></button>'+
+    '<div class="stage" id="stage">'+stageHTML(t)+
+      '<div class="counter disp" id="counter" style="display:none">0</div></div>'+
+    answers+'</div>';
+}
+
+function renderReward(){
+  var stars="";
+  for(var i=0;i<TASKS;i++)stars+='<span class="'+(i<G.correct?"got":"")+'">⭐</span>';
+  app.innerHTML='<div class="reward">'+
+    '<div class="bob" style="font-size:70px">'+(G.correct>=6?"🏆":"🌟")+'</div>'+
+    '<h2 class="disp">Bra jobba!</h2>'+
+    '<div class="starrow">'+stars+'</div>'+
+    '<p class="disp" style="font-size:clamp(19px,5vw,25px)">Du klarte '+G.correct+' av '+TASKS+'</p>'+
+    '<div style="width:100%;max-width:380px;margin-top:16px">'+stiHTML()+'</div>'+
+    '<div class="btnrow"><button class="big" data-do="hjem">🏠 Hjem</button>'+
+    '<button class="big go" data-do="igjen">▶ En gang til</button></div></div>';
+}
+
+function renderAdult(){
+  var total=0,right=0;
+  for(var k in S.stats){total+=S.stats[k].right+S.stats[k].wrong;right+=S.stats[k].right;}
+  var rows=ACTS.map(function(a){
+    var L=lvl(a.id), st=S.stats[a.id]||{right:0,wrong:0}, n=st.right+st.wrong, pips="";
+    for(var i=1;i<=5;i++)pips+='<i style="'+(i<=L?"background:"+a.color:"")+'"></i>';
+    return '<div class="skill"><span style="font-size:19px;width:26px">'+a.emoji+'</span><span>'+a.title+'</span>'+
+      '<span class="pct">'+(n?Math.round(st.right/n*100)+" % av "+n:"ikke øvd")+'</span>'+
+      '<div class="pips">'+pips+'</div></div>';
+  }).join("");
+  app.innerHTML=
+    '<div class="top"><h2 class="disp" style="font-size:25px;color:var(--sun)">For voksne</h2>'+
+    '<button class="iconbtn" data-do="hjem" style="width:auto;padding:0 16px;font-size:15px">Lukk</button></div>'+
+    '<div class="stats3">'+
+      '<div class="stat"><b>'+S.sessions+'</b><small>Økter</small></div>'+
+      '<div class="stat"><b>'+total+'</b><small>Oppgaver</small></div>'+
+      '<div class="stat"><b>'+(total?Math.round(right/total*100)+" %":"–")+'</b><small>Riktig</small></div></div>'+
+    '<div class="panel"><p class="disp" style="font-size:17px;margin-bottom:8px">Nivå per ferdighet</p>'+rows+'</div>'+
+    '<div class="panel"><p class="disp" style="font-size:17px;margin-bottom:8px">Slik virker den</p>'+
+      '<p class="hint">Nivået justerer seg selv: fire riktige på rad gir vanskeligere oppgaver, tre feil på rad gjør dem lettere igjen. '+
+      'Feil svar straffes ikke — riktig svar vises alltid. Barnet kan trykke på hver ting for å telle høyt, og på spørsmålet for å høre det på nytt. '+
+      'En økt er åtte oppgaver og tar rundt fem minutter.</p></div>'+
+    '<div class="panel"><p class="disp" style="font-size:17px;margin-bottom:8px">Stemme</p>'+
+      (VOICES.length
+        ? '<select id="vsel" class="vsel">'+VOICES.map(function(v){
+            var norsk=/^(nb|nn|no)/i.test(v.lang)?" ★":"";
+            var sel=(v.name===S.voiceName)?' selected':'';
+            return '<option value="'+v.name.replace(/"/g,"")+'"'+sel+'>'+v.name+' ('+v.lang+')'+norsk+'</option>';
+          }).join("")+'</select>'+
+          '<div class="speedrow"><span style="font-size:13px;opacity:.75">Fart</span>'+
+          '<input type="range" id="vrate" min="0.6" max="1.2" step="0.05" value="'+(S.rate||0.9)+'">'+
+          '<span style="font-size:13px;opacity:.75;width:34px;text-align:right">'+(S.rate||0.9).toFixed(2)+'</span></div>'+
+          '<div class="speedrow"><span style="font-size:13px;opacity:.75">Lys / mørk</span>'+
+          '<input type="range" id="vpitch" min="0.5" max="1.5" step="0.05" value="'+(S.pitch===undefined?1.1:S.pitch)+'">'+
+          '<span style="font-size:13px;opacity:.75;width:34px;text-align:right">'+(S.pitch===undefined?1.1:S.pitch).toFixed(2)+'</span></div>'+
+          '<button class="danger" style="background:rgba(78,140,90,.3);border-color:var(--moss);margin-top:10px" data-do="test">▶ Hør stemmen</button>'
+        : '<p class="hint">Telefonen har ingen talestemmer tilgjengelig ennå. På iPhone: Innstillinger → Tilgjengelighet → Talt innhold → Stemmer. På Android: Innstillinger → Tilgjengelighet → Tekst-til-tale.</p>')+
+    '</div>'+
+    '<div class="toggles"><button data-do="sound">Lyd: '+(S.sound?"på":"av")+'</button>'+
+    '<button data-do="voicetog">Tale: '+(S.voice?"på":"av")+'</button></div>'+
+    '<button class="danger" data-do="reset">Nullstill all fremgang</button>';
+}
+
+/* ===== spill-logikk ===== */
+function newTask(){
+  G.task=G.act.gen(lvl(G.act.id));
+  G.tapped={};G.locked=false;
+  renderPlay();
+  setTimeout(function(){say(G.task.speak);},250);
+}
+function startAct(id){
+  G.act=actById(id);G.idx=0;G.correct=0;G.ok=0;G.bad=0;G.screen="spill";
+  newTask();
+}
+function answer(val){
+  if(G.locked)return;
+  G.locked=true;
+  var t=G.task, ok=(String(val)===String(t.answer));
+  tone(ok?"right":"wrong");
+  say(ok?pick(["Riktig!","Bra jobba!","Kjempebra!","Det stemmer!"]):"Nesten. Se her.");
+
+  if(t.kind==="compare"){
+    var btns=app.querySelectorAll("[data-side]");
+    for(var i=0;i<btns.length;i++){
+      var side=btns[i].getAttribute("data-side");
+      if(side===t.answer)btns[i].classList.add("right");
+      else if(side===val)btns[i].classList.add("bad");
+    }
+  }else{
+    var as=app.querySelectorAll("[data-ans]");
+    for(var j=0;j<as.length;j++){
+      var v=as[j].getAttribute("data-ans");
+      if(v===String(t.answer))as[j].classList.add("right");
+      else if(v===String(val))as[j].classList.add("bad");
+    }
+  }
+  if(ok){
+    G.correct++;G.ok++;G.bad=0;
+    var s=document.createElement("div");s.className="star";s.textContent="⭐";
+    document.body.appendChild(s);setTimeout(function(){s.remove();},1000);
+  }else{
+    G.bad++;G.ok=0;
+    var st=document.getElementById("stage");if(st){st.classList.add("shake");}
+  }
+
+  var id=G.act.id, L=lvl(id);
+  if(ok&&G.ok>=4&&L<5){S.levels[id]=L+1;G.ok=0;}
+  if(!ok&&G.bad>=3&&L>1){S.levels[id]=L-1;G.bad=0;}
+  if(!S.stats[id])S.stats[id]={right:0,wrong:0};
+  S.stats[id][ok?"right":"wrong"]++;
+  save();
+
+  setTimeout(function(){
+    G.idx++;
+    if(G.idx>=TASKS)finish();
+    else newTask();
+  }, ok?1100:2100);
+}
+function finish(){
+  tone("win");
+  S.stars+=G.correct;
+  S.sessions++;
+  S.step++;
+  if(S.step>=PATH){S.step=0;S.badges.push(BADGES[S.badges.length%BADGES.length]);}
+  save();
+  G.screen="belonning";render();
+  setTimeout(function(){say("Du klarte "+G.correct+" av "+TASKS+"!");},450);
+}
+
+/* ===== voksenlås ===== */
+function gate(){
+  var a=rnd(6,9), b=rnd(6,9);
+  var m=document.createElement("div");m.className="modal";
+  m.innerHTML='<div class="sheet"><p class="disp" style="font-size:20px">For voksne</p>'+
+    '<p style="font-size:13px;opacity:.75;margin:4px 0 14px">Svar på '+a+' × '+b+' for å fortsette.</p>'+
+    '<input inputmode="numeric" id="gateval" autocomplete="off">'+
+    '<div class="row2"><button data-g="no">Avbryt</button><button class="ok" data-g="yes">OK</button></div></div>';
+  document.body.appendChild(m);
+  m.addEventListener("click",function(e){
+    var t=e.target.closest("[data-g]");
+    if(!t){if(e.target===m)m.remove();return;}
+    if(t.getAttribute("data-g")==="yes"){
+      var v=document.getElementById("gateval").value;
+      if(Number(v)===a*b){m.remove();G.screen="voksen";render();}
+      else document.getElementById("gateval").value="";
+    }else m.remove();
+  });
+  setTimeout(function(){document.getElementById("gateval").focus();},50);
+}
+function confirmReset(){
+  var m=document.createElement("div");m.className="modal";
+  m.innerHTML='<div class="sheet"><p class="disp" style="font-size:20px">Nullstille alt?</p>'+
+    '<p style="font-size:13px;opacity:.75;margin:6px 0 16px">Stjerner, merker og nivåer slettes. Dette kan ikke angres.</p>'+
+    '<div class="row2"><button data-r="no">Behold</button><button class="no" data-r="yes">Nullstill</button></div></div>';
+  document.body.appendChild(m);
+  m.addEventListener("click",function(e){
+    var t=e.target.closest("[data-r]");if(!t)return;
+    if(t.getAttribute("data-r")==="yes"){S=JSON.parse(JSON.stringify(FRESH));save();m.remove();G.screen="hjem";render();}
+    else m.remove();
+  });
+}
+
+/* ===== hendelser ===== */
+app.addEventListener("click",function(e){
+  var t;
+  if((t=e.target.closest("[data-act]"))){var id=t.getAttribute("data-act");say(actById(id).title);startAct(id);return;}
+  if((t=e.target.closest("[data-ans]"))){answer(t.getAttribute("data-ans"));return;}
+  if((t=e.target.closest("[data-side]"))){answer(t.getAttribute("data-side"));return;}
+  if((t=e.target.closest("[data-tap]"))){
+    var i=t.getAttribute("data-tap");
+    if(G.task&&G.task.kind==="money"){t.classList.toggle("used");tone("tap");return;}
+    if(G.tapped[i]){delete G.tapped[i];t.classList.remove("on");}
+    else{G.tapped[i]=1;t.classList.add("on");tone("tap");say(String(Object.keys(G.tapped).length));}
+    var c=document.getElementById("counter");
+    if(c){var n=Object.keys(G.tapped).length;c.textContent=n;c.style.display=n?"block":"none";}
+    return;
+  }
+  if((t=e.target.closest("[data-do]"))){
+    var d=t.getAttribute("data-do");
+    if(d==="hjem"){G.screen="hjem";render();}
+    else if(d==="si"){say(G.task.speak);}
+    else if(d==="igjen"){startAct(G.act.id);}
+    else if(d==="gate"){gate();}
+    else if(d==="lyd"){S.voice=!S.voice;S.sound=S.voice;save();render();}
+    else if(d==="sound"){S.sound=!S.sound;save();render();}
+    else if(d==="voicetog"){S.voice=!S.voice;save();render();}
+    else if(d==="test"){S.voice=true;say("Hei! Hva er fire pluss tre?");}
+    else if(d==="reset"){confirmReset();}
+  }
+});
+
+app.addEventListener("change",function(e){
+  if(e.target.id==="vsel"){
+    S.voiceName=e.target.value;save();
+    S.voice=true;say("Hei! Hva er fire pluss tre?");
+  }
+});
+app.addEventListener("input",function(e){
+  if(e.target.id==="vrate"){
+    S.rate=parseFloat(e.target.value);save();
+    var lab=e.target.nextElementSibling;
+    if(lab)lab.textContent=S.rate.toFixed(2);
+  }
+  if(e.target.id==="vpitch"){
+    S.pitch=parseFloat(e.target.value);save();
+    var lab2=e.target.nextElementSibling;
+    if(lab2)lab2.textContent=S.pitch.toFixed(2);
+  }
+});
+app.addEventListener("change",function(e){
+  if(e.target.id==="vrate"||e.target.id==="vpitch"){S.voice=true;say("Hva er fire pluss tre?");}
+});
+
+/* ===== service worker (installerbar app + offline) ===== */
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+
+/* ===== tilbake-knapp: gå hjem / lukk dialog i stedet for å avslutte ===== */
+function armBack(){try{history.pushState(null,"",location.href);}catch(e){}}
+window.addEventListener("popstate",function(){
+  var m=document.querySelector(".modal");
+  if(m){m.remove();armBack();return;}           // lukk åpen dialog
+  if(G.screen!=="hjem"){                          // gå tilbake til hjem
+    try{window.speechSynthesis.cancel();}catch(e){}
+    G.screen="hjem";render();armBack();return;
+  }
+  history.back();                                 // allerede hjemme → la appen lukkes
+});
+
+/* ===== start ===== */
+S=load();
+render();
+armBack();
+</script>
+</body>
+</html>
